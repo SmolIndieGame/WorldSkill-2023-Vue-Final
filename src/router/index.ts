@@ -8,7 +8,7 @@ const router = createRouter({
     {
       path: '/',
       name: 'game',
-      component: GameListVue
+      component: HomeView
     }
   ]
 })

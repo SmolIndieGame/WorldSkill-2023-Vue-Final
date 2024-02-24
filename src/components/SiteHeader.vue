@@ -1,20 +1,13 @@
-<script setup lang="ts">
-import { RouterLink, RouterView } from 'vue-router'
-import HomeView from './views/HomeView.vue'
-</script>
+<script setup lang="ts"></script>
 
 <template>
-  <RouterView />
-  <!-- <div class="top">
+  <div class="top">
     <h1>WorldSkills: Games</h1>
     <div>
       <RouterLink to="">Sign Up</RouterLink>
       <RouterLink to="">Sign In</RouterLink>
     </div>
   </div>
-  <div class="content">
-    <HomeView :number-of-games="567" />
-  </div> -->
 </template>
 
 <style scoped>

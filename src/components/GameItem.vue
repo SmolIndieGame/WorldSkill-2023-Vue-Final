@@ -1,28 +1,11 @@
 <script setup lang="ts">
-import { ref, watch } from 'vue'
-import Games from '@/models/games'
+import { Game } from '@/models/games'
 
-const props = defineProps<{ params: string }>()
-
-const loading = ref(true)
-const games = ref(new Games())
-
-const host = 'http://localhost:8000/module_c_solution'
-
-watch(
-  () => props.params,
-  async (params) => {
-    loading.value = true
-    const res = await fetch(host + '/api/v1/games' + params)
-    games.value = (await res.json()) as Games
-    loading.value = false
-  },
-  { immediate: true }
-)
+defineProps<{ game: Game; thumbnail?: string }>()
 </script>
 
 <template>
-  <div class="container" v-if="!loading" v-for="game in games.content" :key="game.slug">
+  <div class="container">
     <div class="top">
       <div class="left">
         <h2>{{ game.title }}</h2>
@@ -31,13 +14,12 @@ watch(
       <div class="right"># scores submitted: {{ game.scoreCount }}</div>
     </div>
     <div class="bottom">
-      <img :src="host + '/storage/app' + game.thumbnail?.replace(/demo-game-/, '')" />
+      <img :src="thumbnail ?? 'http://placeholder.com/600x400'" />
       <p>
         {{ game.description }}
       </p>
     </div>
   </div>
-  <div v-else>Loading...</div>
 </template>
 
 <style scoped>
