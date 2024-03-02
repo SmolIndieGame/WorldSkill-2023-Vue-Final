@@ -14,3 +14,14 @@ export class Game {
   uploadTimestamp?: string
   author?: string
 }
+
+export class GameSlug {
+  title?: string
+  slug?: string
+  description?: string
+  thumbnail?: string
+  uploadTimestamp?: string
+  author?: string
+  scoreCount?: number
+  gamePath?: string
+}

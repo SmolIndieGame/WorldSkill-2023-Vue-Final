@@ -1,20 +1,28 @@
 <script setup lang="ts">
 import { Game } from '@/models/games'
+import { RouterLink } from 'vue-router'
 
-defineProps<{ game: Game; thumbnail?: string }>()
+defineProps<{ game: Game; thumbnail?: string; slugLink?: string }>()
+defineEmits<{ titleClick: [] }>()
 </script>
 
 <template>
   <div class="container">
     <div class="top">
       <div class="left">
-        <h2>{{ game.title }}</h2>
+        <h2 v-if="slugLink">
+          <RouterLink :to="slugLink">{{ game.title }}</RouterLink>
+        </h2>
+        <h2 v-else>{{ game.title }}</h2>
         <h3>by {{ game.author }}</h3>
       </div>
       <div class="right"># scores submitted: {{ game.scoreCount }}</div>
     </div>
     <div class="bottom">
-      <img :src="thumbnail ?? 'http://placeholder.com/600x400'" />
+      <img
+        :src="thumbnail ?? 'http://placeholder.com/600x400'"
+        :alt="'thumbnail for game ' + game.title"
+      />
       <p>
         {{ game.description }}
       </p>

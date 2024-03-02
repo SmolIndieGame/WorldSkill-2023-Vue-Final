@@ -3,7 +3,7 @@ import { ref, watch, computed } from 'vue'
 import { useRoute } from 'vue-router'
 import SiteHeader from '@/components/SiteHeader.vue'
 import GameItem from '@/components/GameItem.vue'
-import { getGames, thumbnailPathCorrection } from '@/api/games'
+import { getGames, storagePathCorrection } from '@/api/games'
 import Games from '@/models/games'
 
 const numberOfGames = ref(0)
@@ -16,8 +16,8 @@ const games = ref(new Games())
 watch(
   () => route.query,
   async (newQuery) => {
-    query.value.sortBy = newQuery.sortBy as string
-    query.value.sortDir = newQuery.sortDir as string
+    if (newQuery.sortBy) query.value.sortBy = newQuery.sortBy as string
+    if (newQuery.sortDir) query.value.sortDir = newQuery.sortDir as string
 
     loadingGames.value = true
     games.value = await getGames(query.value.sortBy, query.value.sortDir)
@@ -27,8 +27,12 @@ watch(
   { immediate: true }
 )
 
-const getRoute = (options: { by?: string; dir?: string }) =>
+const getSearchRoute = (options: { by?: string; dir?: string }) =>
   `?sortBy=${options.by ?? query.value.sortBy}&sortDir=${options.dir ?? query.value.sortDir}`
+
+const getGame = async () => {
+  alert('hi')
+}
 </script>
 
 <template>
@@ -37,13 +41,13 @@ const getRoute = (options: { by?: string; dir?: string }) =>
     <div class="title">
       <h2>{{ numberOfGames }} Games available</h2>
       <div class="tabs">
-        <RouterLink :to="getRoute({ by: 'popular' })">Popularity</RouterLink>
-        <RouterLink :to="getRoute({ by: 'uploaddate' })">Recently Updated</RouterLink>
-        <RouterLink :to="getRoute({ by: 'title' })">Alphabetically</RouterLink>
+        <RouterLink :to="getSearchRoute({ by: 'popular' })">Popularity</RouterLink>
+        <RouterLink :to="getSearchRoute({ by: 'uploaddate' })">Recently Updated</RouterLink>
+        <RouterLink :to="getSearchRoute({ by: 'title' })">Alphabetically</RouterLink>
       </div>
       <div class="tabs">
-        <RouterLink :to="getRoute({ dir: 'asc' })">ASC</RouterLink>
-        <RouterLink :to="getRoute({ dir: 'desc' })">DESC</RouterLink>
+        <RouterLink :to="getSearchRoute({ dir: 'asc' })">ASC</RouterLink>
+        <RouterLink :to="getSearchRoute({ dir: 'desc' })">DESC</RouterLink>
       </div>
     </div>
     <div class="content">
@@ -51,9 +55,8 @@ const getRoute = (options: { by?: string; dir?: string }) =>
         <div class="container" v-for="game in games.content" :key="game.slug">
           <GameItem
             :game="game"
-            :thumbnail="
-              game.thumbnail == null ? undefined : thumbnailPathCorrection(game.thumbnail)
-            "
+            :thumbnail="storagePathCorrection(game.thumbnail)"
+            :slugLink="game.slug"
           />
         </div>
       </div>
