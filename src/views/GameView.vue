@@ -1,5 +1,7 @@
 <script setup lang="ts">
 import { getGameSlug, getScores, storagePathCorrection } from '@/api/games'
+import { getUser } from '@/api/users'
+import AuthLayout from '@/components/AuthLayout.vue'
 import SiteHeader from '@/components/SiteHeader.vue'
 import Scores from '@/models/Scores'
 import { GameSlug } from '@/models/games'
@@ -12,6 +14,8 @@ const loadingGame = ref(true)
 const loadingScore = ref(true)
 const game = ref(new GameSlug())
 const scores = ref(new Scores())
+const username = ref('')
+const userScore = ref<number>()
 
 watch(
   () => route.params.slug,
@@ -23,6 +27,11 @@ watch(
     loadingGame.value = false
     scores.value = await getScores(newSlug as string)
     loadingScore.value = false
+
+    const res = await getUser()
+    if ('status' in res) return
+    username.value = res.username
+    userScore.value = res.highscores.find((x) => x.game.slug === game.value.slug)?.score
   },
   { immediate: true }
 )
@@ -36,39 +45,49 @@ window.addEventListener('message', (message) => {
 
 <template>
   <SiteHeader />
-  <main>
-    <div v-if="loadingGame">loading...</div>
-    <div v-else>
-      <h2>{{ game.title }}</h2>
-      <iframe :src="storagePathCorrection(game.gamePath)">Game cound not be loaded</iframe>
-    </div>
-    <div class="bottom">
-      <div class="leaderboard">
-        <h3>Top 10 leaderboard</h3>
-        <div v-if="loadingScore">loading...</div>
-        <div v-else>
-          <ul v-for="(score, idx) in scores.scores.slice(0, 10)" :key="score.timestamp">
-            <li>
-              <span># {{ idx + 1 }} {{ score.username }}</span>
-              <span>{{ score.score }}</span>
-            </li>
-          </ul>
-          <div class="player-score">
-            <span>Hello</span>
-            <span>3294</span>
+  <AuthLayout>
+    <template v-slot:guest>
+      <h1 class="signin">
+        Please <RouterLink :to="'/signin?redirect=' + useRoute().path">Sign In</RouterLink>
+      </h1>
+    </template>
+    <main>
+      <div v-if="loadingGame">loading...</div>
+      <div v-else>
+        <h2>{{ game.title }}</h2>
+        <iframe :src="storagePathCorrection(game.gamePath)">Game cound not be loaded</iframe>
+      </div>
+      <div class="bottom">
+        <div class="leaderboard">
+          <h3>Top 10 leaderboard</h3>
+          <div v-if="loadingScore">loading...</div>
+          <div v-else>
+            <ul v-for="(score, idx) in scores.scores.slice(0, 10)" :key="score.timestamp">
+              <li>
+                <span># {{ idx + 1 }} {{ score.username }}</span>
+                <span>{{ score.score }}</span>
+              </li>
+            </ul>
+            <div v-if="userScore" class="player-score">
+              <span>{{ username }}</span>
+              <span>{{ userScore }}</span>
+            </div>
           </div>
         </div>
+        <div class="description">
+          <h3>Description</h3>
+          <p v-if="loadingGame">loading...</p>
+          <p v-else>{{ game.description }}</p>
+        </div>
       </div>
-      <div class="description">
-        <h3>Description</h3>
-        <p v-if="loadingGame">loading...</p>
-        <p v-else>{{ game.description }}</p>
-      </div>
-    </div>
-  </main>
+    </main>
+  </AuthLayout>
 </template>
 
 <style scoped>
+.signin {
+  text-align: center;
+}
 main {
   margin-bottom: 1rem;
   padding: 1rem;

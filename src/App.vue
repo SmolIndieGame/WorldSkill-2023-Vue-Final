@@ -1,10 +1,12 @@
 <script setup lang="ts">
 import { RouterLink, RouterView } from 'vue-router'
 import HomeView from './views/HomeView.vue'
+import SiteHeader from './components/SiteHeader.vue'
 </script>
 
 <template>
   <RouterView />
+  <!-- https://hamster.cpttm.org.mo/spaces/Deh8nNlTQm6KGHR0JfaDRA -->
   <!-- <div class="top">
     <h1>WorldSkills: Games</h1>
     <div>
