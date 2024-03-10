@@ -2,36 +2,47 @@
 import { getGameSlug, getScores, storagePathCorrection } from '@/api/games'
 import { getUser } from '@/api/users'
 import AuthLayout from '@/components/AuthLayout.vue'
+import Promise, { usePromise } from '@/components/Promise.vue'
 import SiteHeader from '@/components/SiteHeader.vue'
 import Scores from '@/models/Scores'
 import { GameSlug } from '@/models/games'
+import { useTokenStore } from '@/stores/counter'
 import { ref, watch } from 'vue'
 import { useRoute } from 'vue-router'
 
 const route = useRoute()
+const tokenStore = useTokenStore()
 
-const loadingGame = ref(true)
-const loadingScore = ref(true)
-const game = ref(new GameSlug())
-const scores = ref(new Scores())
-const username = ref('')
-const userScore = ref<number>()
+const game = usePromise<GameSlug>()
+const scores = usePromise<Scores>()
+const user = usePromise<{ username: string; userScore: number | undefined }>()
+
+// const loadingGame = ref(true)
+// const loadingScore = ref(true)
+// const game = ref(new GameSlug())
+// const scores = ref(new Scores())
+// const username = ref('')
+// const userScore = ref<number>()
 
 watch(
   () => route.params.slug,
   async (newSlug) => {
     if (!newSlug) return
-    loadingGame.value = true
-    loadingScore.value = true
-    game.value = await getGameSlug(newSlug as string)
-    loadingGame.value = false
-    scores.value = await getScores(newSlug as string)
-    loadingScore.value = false
-
-    const res = await getUser()
-    if ('status' in res) return
-    username.value = res.username
-    userScore.value = res.highscores.find((x) => x.game.slug === game.value.slug)?.score
+    if (typeof newSlug !== 'string') return
+    scores.call(async () => {
+      return getScores(newSlug)
+    })
+    await game.call(async () => {
+      return getGameSlug(newSlug)
+    })
+    user.call(async () => {
+      const res = await getUser(tokenStore.username)
+      if ('message' in res) throw new Error('get user failed')
+      return {
+        username: res.username,
+        userScore: res.highscores.find((x) => x.game.slug === game.result?.slug)?.score
+      }
+    })
   },
   { immediate: true }
 )
@@ -44,44 +55,48 @@ window.addEventListener('message', (message) => {
 </script>
 
 <template>
-  <SiteHeader />
-  <AuthLayout>
-    <template v-slot:guest>
-      <h1 class="signin">
-        Please <RouterLink :to="'/signin?redirect=' + useRoute().path">Sign In</RouterLink>
-      </h1>
-    </template>
-    <main>
-      <div v-if="loadingGame">loading...</div>
-      <div v-else>
-        <h2>{{ game.title }}</h2>
-        <iframe :src="storagePathCorrection(game.gamePath)">Game cound not be loaded</iframe>
-      </div>
+  <main>
+    <AuthLayout check>
+      <template #guest>
+        <h1 class="signin">
+          Please <RouterLink :to="'/signin?redirect=' + useRoute().path">Sign In</RouterLink>
+        </h1>
+      </template>
+      <Promise :promise="game">
+        <h2>{{ game.result?.title }}</h2>
+        <iframe :src="storagePathCorrection(game.result?.gamePath)"
+          >Game cound not be loaded</iframe
+        >
+      </Promise>
       <div class="bottom">
         <div class="leaderboard">
           <h3>Top 10 leaderboard</h3>
-          <div v-if="loadingScore">loading...</div>
-          <div v-else>
-            <ul v-for="(score, idx) in scores.scores.slice(0, 10)" :key="score.timestamp">
-              <li>
-                <span># {{ idx + 1 }} {{ score.username }}</span>
-                <span>{{ score.score }}</span>
-              </li>
-            </ul>
-            <div v-if="userScore" class="player-score">
-              <span>{{ username }}</span>
-              <span>{{ userScore }}</span>
-            </div>
-          </div>
+          <Promise :promise="scores">
+            <template v-slot="{ result }">
+              <ul v-for="(score, idx) in result.scores.slice(0, 10)" :key="score.timestamp">
+                <li>
+                  <span># {{ idx + 1 }} {{ score.username }}</span>
+                  <span>{{ score.score }}</span>
+                </li>
+              </ul>
+              <Promise :promise="user">
+                <div v-if="user.result?.userScore" class="player-score">
+                  <span>{{ user.result.username }}</span>
+                  <span>{{ user.result.userScore }}</span>
+                </div>
+              </Promise>
+            </template>
+          </Promise>
         </div>
         <div class="description">
           <h3>Description</h3>
-          <p v-if="loadingGame">loading...</p>
-          <p v-else>{{ game.description }}</p>
+          <Promise :promise="game">
+            <p>{{ game.result?.description }}</p>
+          </Promise>
         </div>
       </div>
-    </main>
-  </AuthLayout>
+    </AuthLayout>
+  </main>
 </template>
 
 <style scoped>
@@ -97,6 +112,8 @@ iframe {
   display: flex;
   width: 100%;
   height: 500px;
+  border: 2px solid var(--color-border);
+  background-color: #eee;
 }
 
 img {

@@ -1,8 +1,9 @@
 import { createRouter, createWebHistory } from 'vue-router'
 import HomeView from '../views/HomeView.vue'
 import GameView from '@/views/GameView.vue'
-import Signin from '@/views/SigninView.vue'
-import SignoutView from '@/views/SignoutView.vue'
+import SignInView from '@/views/SignInView.vue'
+import SignOutView from '@/views/SignOutView.vue'
+import UserView from '@/views/UserView.vue'
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
@@ -13,14 +14,14 @@ const router = createRouter({
       component: HomeView
     },
     {
-      path: '/:slug',
+      path: '/games/:slug',
       name: 'game',
       component: GameView
     },
     {
       path: '/signup',
       name: 'signup',
-      component: Signin,
+      component: SignInView,
       props: {
         action: 'signup'
       }
@@ -28,7 +29,7 @@ const router = createRouter({
     {
       path: '/signin',
       name: 'signin',
-      component: Signin,
+      component: SignInView,
       props: {
         action: 'signin'
       }
@@ -36,7 +37,12 @@ const router = createRouter({
     {
       path: '/signout',
       name: 'signout',
-      component: SignoutView
+      component: SignOutView
+    },
+    {
+      path: '/users/:user',
+      name: 'user',
+      component: UserView
     }
   ]
 })

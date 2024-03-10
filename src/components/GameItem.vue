@@ -2,7 +2,7 @@
 import { Game } from '@/models/games'
 import { RouterLink } from 'vue-router'
 
-defineProps<{ game: Game; thumbnail?: string; slugLink?: string }>()
+defineProps<{ game: Game; thumbnail?: string; hideAuthor?: boolean; manageable?: boolean }>()
 defineEmits<{ titleClick: [] }>()
 </script>
 
@@ -10,11 +10,16 @@ defineEmits<{ titleClick: [] }>()
   <div class="container">
     <div class="top">
       <div class="left">
-        <h2 v-if="slugLink">
-          <RouterLink :to="slugLink">{{ game.title }}</RouterLink>
+        <h2 v-if="game.slug">
+          <RouterLink :to="'/games/' + game.slug">{{ game.title }}</RouterLink>
         </h2>
         <h2 v-else>{{ game.title }}</h2>
-        <h3>by {{ game.author }}</h3>
+        <h3 v-if="!hideAuthor">
+          by <RouterLink :to="'/users/' + game.author">{{ game.author }}</RouterLink>
+        </h3>
+        <h3 v-if="manageable">
+          &nbsp;<RouterLink :to="'/manage/' + game.slug">Manage</RouterLink>
+        </h3>
       </div>
       <div class="right"># scores submitted: {{ game.scoreCount }}</div>
     </div>
@@ -32,7 +37,7 @@ defineEmits<{ titleClick: [] }>()
 
 <style scoped>
 .container {
-  border: 1px black solid;
+  border: 2px var(--color-border) solid;
   margin-bottom: 1rem;
   padding: 1rem;
 }

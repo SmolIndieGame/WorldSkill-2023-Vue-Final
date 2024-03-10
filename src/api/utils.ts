@@ -10,10 +10,11 @@ export const myFetch = (
 ) => {
   const headers = new Headers()
   headers.append('Content-Type', 'application/json')
+  if (useTokenStore().token) headers.append('Authorization', 'Bearer ' + useTokenStore().token)
   headers.append('Accept', 'application/json')
-  headers.append('Authorization', 'Bearer ' + useTokenStore().token)
   for (const key in extraHeaders) {
     headers.append(key, extraHeaders[key])
   }
+  console.log(host + path)
   return fetch(host + path, { headers, method, body: JSON.stringify(body) })
 }

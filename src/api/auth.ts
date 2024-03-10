@@ -1,12 +1,11 @@
-import { useTokenStore } from '@/stores/counter'
 import { myFetch } from './utils'
 
-type OkResponse = {
+export type AuthOk = {
   status: 'success'
   token: string
 }
 
-type ErrorResponse = {
+export type AuthError = {
   status: 'invalid'
   message: string
   violations?: {
@@ -19,23 +18,17 @@ type ErrorResponse = {
   }
 }
 
-export const signup = async (
-  username: string,
-  password: string
-): Promise<OkResponse | ErrorResponse> => {
+export const signUp = async (username: string, password: string): Promise<AuthOk | AuthError> => {
   const res = await myFetch('/api/v1/auth/signup', 'POST', { username, password })
   return await res.json()
 }
 
-export const signin = async (
-  username: string,
-  password: string
-): Promise<OkResponse | ErrorResponse> => {
+export const signIn = async (username: string, password: string): Promise<AuthOk | AuthError> => {
   const res = await myFetch('/api/v1/auth/signin', 'POST', { username, password })
   return await res.json()
 }
 
-export const signout = async (): Promise<OkResponse | ErrorResponse> => {
+export const signOut = async (): Promise<AuthOk | AuthError> => {
   const res = await myFetch('/api/v1/auth/signout', 'POST')
   return await res.json()
 }

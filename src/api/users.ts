@@ -1,10 +1,15 @@
 import { useTokenStore } from '@/stores/counter'
 import { myFetch } from './utils'
 
-type UserOk = {
+export type User = {
   username: string
   registeredTimestamp: string
-  authoredGames: any[]
+  authoredGames: {
+    title: string
+    slug: string
+    description: string
+    thumbnail?: string
+  }[]
   highscores: {
     game: {
       slug: string
@@ -16,14 +21,13 @@ type UserOk = {
   }[]
 }
 
-type UserError = {
+export type GetUserError = {
   status: string
   message: string
 }
 
-export const getUser = async (): Promise<UserOk | UserError> => {
-  const tokenStore = useTokenStore()
-  if (!tokenStore.username) return { status: 'not-found', message: 'Not Found' }
-  const res = await myFetch('/api/v1/users/' + tokenStore.username, 'GET')
+export const getUser = async (name: string): Promise<User | GetUserError> => {
+  // if (!tokenStore.username) return { status: 'not-found', message: 'Not Found' }
+  const res = await myFetch('/api/v1/users/' + name, 'GET')
   return await res.json()
 }

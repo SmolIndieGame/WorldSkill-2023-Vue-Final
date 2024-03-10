@@ -1,4 +1,4 @@
-FROM php:8.0.24-apache
+FROM php:8.2.0-apache
 
 # Install composer and its dependencies
 RUN php -r "copy('https://getcomposer.org/installer', 'composer-setup.php');" \
