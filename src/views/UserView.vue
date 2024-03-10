@@ -24,6 +24,7 @@ watch(
         gamesPromise.push(getGameSlug(game.slug))
       }
       const games = await Promise.all(gamesPromise)
+      console.log(games)
       return { user, games }
     }),
   { immediate: true }
@@ -44,6 +45,7 @@ watch(
             <h3>Authored Games</h3>
             <div v-for="game in result.games" :key="game.slug">
               <GameItem
+                :playable="game.gamePath ? true : false"
                 hide-author
                 :manageable="result.user.username === tokenStore.username"
                 :game="game"
@@ -52,13 +54,13 @@ watch(
             </div>
           </div>
           <div v-if="result.user.username === tokenStore.username">
-            <RouterLink to="/upload">Upload Game</RouterLink>
+            <RouterLink to="/manage">New Game</RouterLink>
           </div>
           <div v-if="result.user.highscores.length > 0">
             <h3>Highscores Per Game</h3>
             <ul v-for="score in result.user.highscores" :key="score.game.slug">
               <li>
-                <span>{{ score.game.title }}</span>
+                <RouterLink :to="'/games/' + score.game.slug">{{ score.game.title }}</RouterLink>
                 <span>{{ score.score }}</span>
               </li>
             </ul>

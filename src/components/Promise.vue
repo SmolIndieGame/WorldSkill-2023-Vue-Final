@@ -27,6 +27,7 @@ export class PromiseHandler<T> {
       this._result.value = await action()
     } catch (error) {
       this._error.value = error
+      throw error
     } finally {
       this._pending.value = false
     }
@@ -50,7 +51,7 @@ const props = defineProps<{ promise: PromiseHandler<T> }>()
   <slot name="pending" v-else-if="props.promise.pending">
     <p>Loading...</p>
   </slot>
-  <slot v-else :result="props.promise.result!"> </slot>
+  <slot v-else :result="<T>props.promise.result"> </slot>
 </template>
 
 <style scoped></style>

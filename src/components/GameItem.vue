@@ -2,8 +2,13 @@
 import { Game } from '@/models/games'
 import { RouterLink } from 'vue-router'
 
-defineProps<{ game: Game; thumbnail?: string; hideAuthor?: boolean; manageable?: boolean }>()
-defineEmits<{ titleClick: [] }>()
+defineProps<{
+  game: Game
+  thumbnail?: string
+  hideAuthor?: boolean
+  manageable?: boolean
+  playable?: boolean
+}>()
 </script>
 
 <template>
@@ -11,7 +16,8 @@ defineEmits<{ titleClick: [] }>()
     <div class="top">
       <div class="left">
         <h2 v-if="game.slug">
-          <RouterLink :to="'/games/' + game.slug">{{ game.title }}</RouterLink>
+          <RouterLink v-if="playable" :to="'/games/' + game.slug">{{ game.title }}</RouterLink>
+          <span v-else>{{ game.title }}</span>
         </h2>
         <h2 v-else>{{ game.title }}</h2>
         <h3 v-if="!hideAuthor">

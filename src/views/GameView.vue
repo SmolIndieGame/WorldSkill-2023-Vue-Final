@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { getGameSlug, getScores, storagePathCorrection } from '@/api/games'
+import { getGameSlug, getScores, postScore, storagePathCorrection } from '@/api/games'
 import { getUser } from '@/api/users'
 import AuthLayout from '@/components/AuthLayout.vue'
 import Promise, { usePromise } from '@/components/Promise.vue'
@@ -7,7 +7,7 @@ import SiteHeader from '@/components/SiteHeader.vue'
 import Scores from '@/models/Scores'
 import { GameSlug } from '@/models/games'
 import { useTokenStore } from '@/stores/counter'
-import { ref, watch } from 'vue'
+import { onMounted, onUnmounted, ref, watch } from 'vue'
 import { useRoute } from 'vue-router'
 
 const route = useRoute()
@@ -16,6 +16,7 @@ const tokenStore = useTokenStore()
 const game = usePromise<GameSlug>()
 const scores = usePromise<Scores>()
 const user = usePromise<{ username: string; userScore: number | undefined }>()
+const fetchScoreTimer = ref(0)
 
 // const loadingGame = ref(true)
 // const loadingScore = ref(true)
@@ -24,17 +25,22 @@ const user = usePromise<{ username: string; userScore: number | undefined }>()
 // const username = ref('')
 // const userScore = ref<number>()
 
+const fetchScore = () => {
+  if (!game.result?.slug) return
+  scores.call(async () => {
+    return getScores(game.result?.slug)
+  })
+}
+
 watch(
   () => route.params.slug,
   async (newSlug) => {
     if (!newSlug) return
     if (typeof newSlug !== 'string') return
-    scores.call(async () => {
-      return getScores(newSlug)
-    })
     await game.call(async () => {
       return getGameSlug(newSlug)
     })
+    fetchScore()
     user.call(async () => {
       const res = await getUser(tokenStore.username)
       if ('message' in res) throw new Error('get user failed')
@@ -47,10 +53,34 @@ watch(
   { immediate: true }
 )
 
-window.addEventListener('message', (message) => {
+const uploadScore = async (message: MessageEvent<any>) => {
   if (message.data.event_type !== 'game_run_end') return
-  if (confirm('Do you want to submit your score? (' + message.data.score + ')'))
-    alert('score submitted')
+  if (!game.result?.slug) return
+  if (!confirm('Do you want to submit your score? (' + message.data.score + ')')) return
+  const ret = await postScore(game.result.slug, message.data.score)
+  if (ret.status !== 'success') {
+    alert('Score submit failed ' + ret.message)
+    return
+  }
+  alert('Score Submitted')
+  fetchScore()
+  user.call(async () => {
+    const res = await getUser(tokenStore.username)
+    if ('message' in res) throw new Error('get user failed')
+    return {
+      username: res.username,
+      userScore: res.highscores.find((x) => x.game.slug === game.result?.slug)?.score
+    }
+  })
+}
+
+onMounted(() => {
+  window.addEventListener('message', uploadScore)
+  fetchScoreTimer.value = setInterval(fetchScore, 5000)
+})
+onUnmounted(() => {
+  window.removeEventListener('message', uploadScore)
+  clearInterval(fetchScoreTimer.value)
 })
 </script>
 
@@ -64,7 +94,7 @@ window.addEventListener('message', (message) => {
       </template>
       <Promise :promise="game">
         <h2>{{ game.result?.title }}</h2>
-        <iframe :src="storagePathCorrection(game.result?.gamePath)"
+        <iframe :src="storagePathCorrection(game.result?.gamePath + 'index.html')"
           >Game cound not be loaded</iframe
         >
       </Promise>
@@ -75,7 +105,12 @@ window.addEventListener('message', (message) => {
             <template v-slot="{ result }">
               <ul v-for="(score, idx) in result.scores.slice(0, 10)" :key="score.timestamp">
                 <li>
-                  <span># {{ idx + 1 }} {{ score.username }}</span>
+                  <span
+                    ># {{ idx + 1 }}
+                    <RouterLink :to="'/users/' + score.username">{{
+                      score.username
+                    }}</RouterLink></span
+                  >
                   <span>{{ score.score }}</span>
                 </li>
               </ul>
